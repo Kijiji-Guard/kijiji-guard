@@ -24,8 +24,8 @@ In the rapidly evolving African tech ecosystem, security is often seen as a "Dol
 ## March 2026 NDPC Audit Cycle
 The NDPC has mandated that all data controllers and processors must undergo a compliance audit by March 2026. Kijiji-Guard helps you automate the evidence gathering and security validation required for this cycle.
 
-## How to Contribute (GDG Community)
-We welcome contributions from the Google Developer Group (GDG) community!
+## How to Contribute 
+We welcome contributions from the Google Developer Group (GDG) and Cybersecurity community!
 - Add policies for GCP and Azure.
 - Improve the CLI report output.
 - Create a web-based dashboard for scan history.
