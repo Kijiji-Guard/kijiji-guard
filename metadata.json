@@ -1,0 +1,5 @@
+{
+  "name": "Kijiji-Guard",
+  "description": "Automated security auditing for NDPA 2023 compliance in Terraform.",
+  "requestFramePermissions": []
+}
