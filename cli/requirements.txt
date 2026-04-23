@@ -1,0 +1,10 @@
+typer
+rich
+checkov
+pyyaml
+requests
+python-dotenv
+boto3
+google-cloud-asset
+azure-mgmt-resource
+pydo
