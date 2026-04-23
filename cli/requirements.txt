@@ -8,3 +8,5 @@ boto3
 google-cloud-asset
 azure-mgmt-resource
 pydo
+fastapi
+uvicorn[standard]
