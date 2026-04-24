@@ -1,4 +1,4 @@
-import type { ScanResult, HistoryEntry, Regulation } from './types'
+import type { ScanResult, HistoryEntry, Regulation, WatchResult } from './types'
 
 const BASE = 'http://localhost:8000'
 
@@ -28,4 +28,10 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(scanResult),
     }).then(r => r.text()),
+
+  watch: (country: string): Promise<WatchResult> =>
+    fetch(`${BASE}/watch/${country}`).then(r => r.json()),
+
+  watchAll: (country: string): Promise<WatchResult> =>
+    fetch(`${BASE}/watch/${country}/all`).then(r => r.json()),
 }
