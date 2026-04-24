@@ -97,8 +97,8 @@ class KijijiOrchestrator:
                      credentials: dict) -> list[dict]:
         try:
             if scan_type == "iac":
-                from cli.adapters.iac.checkov_adapter import CheckovAdapter
-                return CheckovAdapter().scan(target, country)
+                from cli.adapters.iac.hcl_adapter import HCLAdapter
+                return HCLAdapter().scan(target, country)
 
             if scan_type == "paas:vercel":
                 from cli.adapters.paas.vercel_adapter import VercelAdapter
