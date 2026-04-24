@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react'
 import type { ReactElement } from 'react'
 import type { View, ScanResult } from '../types'
+import { api } from '../api'
 
 interface Props {
   activeView: View
@@ -8,16 +10,31 @@ interface Props {
   isConnected: boolean
 }
 
-const NAV: { id: View; label: string; icon: ReactElement }[] = [
-  { id: 'overview',     label: 'Overview',      icon: <GridIcon /> },
-  { id: 'scan',         label: 'Run scan',       icon: <PlayIcon /> },
-  { id: 'findings',     label: 'Findings',       icon: <ListIcon /> },
-  { id: 'history',      label: 'Scan history',   icon: <ClockIcon /> },
-  { id: 'regulations',  label: 'Regulations',    icon: <BookIcon /> },
-  { id: 'export',       label: 'Export report',  icon: <DownloadIcon /> },
+const NAV: { id: View; label: string; icon: ReactElement; showBadge?: boolean }[] = [
+  { id: 'overview',     label: 'Overview',            icon: <GridIcon /> },
+  { id: 'scan',         label: 'Run scan',             icon: <PlayIcon /> },
+  { id: 'findings',     label: 'Findings',             icon: <ListIcon /> },
+  { id: 'history',      label: 'Scan history',         icon: <ClockIcon /> },
+  { id: 'watch',        label: 'Regulatory Watch',     icon: <BellIcon />, showBadge: true },
+  { id: 'regulations',  label: 'Regulations',          icon: <BookIcon /> },
+  { id: 'export',       label: 'Export report',        icon: <DownloadIcon /> },
 ]
 
 export default function Sidebar({ activeView, setActiveView, lastScanResult, isConnected }: Props) {
+  const [highCount, setHighCount] = useState(0)
+
+  useEffect(() => {
+    fetchHighCount()
+    const interval = setInterval(fetchHighCount, 30 * 60 * 1000) // every 30 min
+    return () => clearInterval(interval)
+  }, [])
+
+  function fetchHighCount() {
+    api.watchAll('all')
+      .then(r => setHighCount(r.by_severity?.HIGH ?? 0))
+      .catch(() => {})
+  }
+
   const lastTs = lastScanResult
     ? new Date(lastScanResult.timestamp).toLocaleString(undefined, {
         month: 'short', day: 'numeric',
@@ -39,14 +56,27 @@ export default function Sidebar({ activeView, setActiveView, lastScanResult, isC
       </div>
 
       <nav className="sidebar-nav">
-        {NAV.map(({ id, label, icon }) => (
+        {NAV.map(({ id, label, icon, showBadge }) => (
           <button
             key={id}
             className={`nav-item ${activeView === id ? 'active' : ''}`}
             onClick={() => setActiveView(id)}
           >
             {icon}
-            {label}
+            <span style={{ flex: 1, textAlign: 'left' }}>{label}</span>
+            {showBadge && highCount > 0 && (
+              <span style={{
+                fontSize: 10,
+                fontWeight: 700,
+                background: 'var(--fail)',
+                color: '#fff',
+                padding: '1px 6px',
+                borderRadius: 20,
+                lineHeight: 1.6,
+              }}>
+                {highCount}
+              </span>
+            )}
           </button>
         ))}
       </nav>
@@ -113,6 +143,15 @@ function ClockIcon() {
       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
+    </svg>
+  )
+}
+function BellIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
     </svg>
   )
 }

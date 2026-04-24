@@ -8,6 +8,7 @@ import Findings from './components/Findings'
 import History from './components/History'
 import Regulations from './components/Regulations'
 import ExportReport from './components/ExportReport'
+import Watch from './components/Watch'
 
 export default function App() {
   const [activeView, setActiveView] = useState<View>('overview')
@@ -86,6 +87,9 @@ export default function App() {
             )}
             {activeView === 'export' && (
               <ExportReport lastScanResult={lastScanResult} />
+            )}
+            {activeView === 'watch' && (
+              <Watch />
             )}
           </div>
         </main>
