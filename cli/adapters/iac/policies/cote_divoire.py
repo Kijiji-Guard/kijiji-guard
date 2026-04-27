@@ -83,7 +83,7 @@ class CoteDivoirePolicies(BasePolicy):
         trails = self.get_resources("aws_cloudtrail")
         if not trails:
             self.failed(
-                "CKV_CIV_005", "No CloudTrail audit logging", "aws_cloudtrail",
+                "CKV_CIV_005", "No CloudTrail audit logging", "project-level",
                 remediation="Create aws_cloudtrail. Loi n°2013-450, Article 29.",
             )
         else:

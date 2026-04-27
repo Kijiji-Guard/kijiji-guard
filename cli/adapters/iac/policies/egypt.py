@@ -43,7 +43,7 @@ class EgyptPolicies(BasePolicy):
         if not trails:
             self.failed(
                 "CKV_EGY_002", "No CloudTrail — 72hr breach notification impossible",
-                "aws_cloudtrail",
+                "project-level",
                 remediation="Egypt PDPL 2020, Art. 23 requires breach notification within "
                             "72 hours. Create aws_cloudtrail with log validation.",
             )
@@ -120,7 +120,7 @@ class EgyptPolicies(BasePolicy):
         trails = self.get_resources("aws_cloudtrail")
         if not trails:
             self.failed(
-                "CKV_EGY_006", "No audit trail configured", "aws_cloudtrail",
+                "CKV_EGY_006", "No audit trail configured", "project-level",
                 remediation="Create aws_cloudtrail. Egypt PDPL 2020, Article 23.",
             )
         else:

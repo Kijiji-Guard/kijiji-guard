@@ -67,7 +67,7 @@ class RwandaPolicies(BasePolicy):
         if not trails:
             self.failed(
                 "CKV_RWA_003", "No CloudTrail — breach response impossible",
-                "aws_cloudtrail",
+                "project-level",
                 remediation="Rwanda Law 058/2021, Art. 34 requires 48-hour breach "
                             "notification — impossible without audit trail. "
                             "Create aws_cloudtrail immediately.",
@@ -113,7 +113,7 @@ class RwandaPolicies(BasePolicy):
         trails = self.get_resources("aws_cloudtrail")
         if not trails:
             self.failed(
-                "CKV_RWA_005", "No audit logging configured", "aws_cloudtrail",
+                "CKV_RWA_005", "No audit logging configured", "project-level",
                 remediation="Create aws_cloudtrail. Rwanda Law 058/2021, Article 34.",
             )
         else:

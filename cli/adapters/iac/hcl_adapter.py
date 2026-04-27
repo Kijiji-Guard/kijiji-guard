@@ -6,9 +6,15 @@ Kijiji-Guard custom policies as plain Python classes.
 
 Install: pip install python-hcl2
 """
+import logging
 import os
 
 from cli.core.base_iac_scanner import BaseIaCScanner
+
+logger = logging.getLogger(__name__)
+
+# hcl2 top-level keys that hold lists of blocks (must be merged by extending)
+_LIST_KEYS = {"resource", "provider", "data", "variable", "locals", "module", "output", "terraform"}
 
 REGULATION_LABELS = {
     "nigeria":      "NDPA 2023",
@@ -48,15 +54,42 @@ class HCLAdapter(BaseIaCScanner):
                                "Pass a .tf file path or a directory containing .tf files.",
             }]
 
-        findings: list[dict] = []
+        # Merge ALL .tf files into one project-level HCL dict before running policies.
+        # This ensures absence-checks (e.g. "no aws_cloudtrail exists") fire exactly
+        # once per project rather than once per file.
+        merged: dict = {}
         for filepath in tf_files:
             parsed = self._parse_tf_file(filepath)
             if not parsed:
                 continue
-            for c in countries:
-                findings.extend(self._run_policies(parsed, filepath, c))
+            for key, val in parsed.items():
+                if key in _LIST_KEYS:
+                    merged.setdefault(key, [])
+                    if isinstance(val, list):
+                        merged[key].extend(val)
+                else:
+                    merged.setdefault(key, val)
+
+        self._debug_resources(merged)
+
+        findings: list[dict] = []
+        for c in countries:
+            findings.extend(self._run_policies(merged, path, c))
 
         return findings
+
+    def _debug_resources(self, merged: dict) -> None:
+        counts: dict[str, int] = {}
+        for block in merged.get("resource", []):
+            for rtype_key in block:
+                if not rtype_key.startswith("_"):
+                    rtype = rtype_key.strip('"')
+                    counts[rtype] = counts.get(rtype, 0) + 1
+        if counts:
+            summary = ", ".join(f"{t}={n}" for t, n in sorted(counts.items()))
+            logger.debug("Merged project resources: %s", summary)
+        else:
+            logger.debug("Merged project resources: (none found)")
 
     # ------------------------------------------------------------------ #
 

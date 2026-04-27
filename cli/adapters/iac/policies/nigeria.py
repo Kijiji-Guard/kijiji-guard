@@ -93,7 +93,7 @@ class NigeriaPolicies(BasePolicy):
         if not trails:
             self.failed(
                 "CKV_NGR_004", "No CloudTrail — breach detection impossible",
-                "aws_cloudtrail",
+                "project-level",
                 remediation="Create aws_cloudtrail with enable_log_file_validation = true. "
                             "NDPA Section 40 requires 72-hour breach notification.",
             )
