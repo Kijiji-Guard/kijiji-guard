@@ -51,6 +51,7 @@ Vercel and Supabase — the platforms most African startups actually use. Connec
 
 ### Requirements
 - Python 3.9+
+- Node.js 18+ (only needed for the web dashboard)
 - Windows: use `py` instead of `python`
 
 ### Install
@@ -60,12 +61,23 @@ Vercel and Supabase — the platforms most African startups actually use. Connec
 git clone https://github.com/Kijiji-Guard/kijiji-guard.git
 cd kijiji-guard
 
-# Install dependencies (takes ~10 seconds)
-pip install python-hcl2 rich typer pyyaml requests python-dotenv
+# Install all Python dependencies (recommended)
+pip install -r cli/requirements.txt
 
 # Windows users:
-py -m pip install python-hcl2 rich typer pyyaml requests python-dotenv
+py -m pip install -r cli/requirements.txt
 ```
+
+<details>
+<summary>Manual install (CLI scanning only, no dashboard or KijijiWatch)</summary>
+
+```bash
+pip install python-hcl2 rich typer pyyaml requests python-dotenv
+```
+
+The full `requirements.txt` adds: `fastapi`, `uvicorn[standard]`, `beautifulsoup4`, `httpx`, and `feedparser` — needed for the API server, web dashboard, and the `watch` command.
+
+</details>
 
 ### Scan a Terraform file
 
@@ -101,10 +113,10 @@ py cli/main.py scan --target supabase --country kenya
 # Terminal 1 — start the API server
 py -m uvicorn cli.api_server:app --reload --port 8000
 
-# Terminal 2 — start the dashboard
-cd dashboard && npm install && npm run dev
+# Terminal 2 — start the dashboard (from the project root)
+npm install && npm run dev
 
-# Open http://localhost:5173
+# Open http://localhost:3000
 ```
 
 ---
