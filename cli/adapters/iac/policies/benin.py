@@ -68,7 +68,7 @@ class BeninPolicies(BasePolicy):
         trails = self.get_resources("aws_cloudtrail")
         if not trails:
             self.failed(
-                "CKV_BEN_004", "No CloudTrail audit logging", "aws_cloudtrail",
+                "CKV_BEN_004", "No CloudTrail audit logging", "project-level",
                 remediation="Create aws_cloudtrail. Loi n°2017-20, Article 548.",
             )
         else:

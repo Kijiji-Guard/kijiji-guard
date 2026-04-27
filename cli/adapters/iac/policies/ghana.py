@@ -77,7 +77,7 @@ class GhanaPolicies(BasePolicy):
         trails = self.get_resources("aws_cloudtrail")
         if not trails:
             self.failed(
-                "CKV_GHA_004", "No CloudTrail configured", "aws_cloudtrail",
+                "CKV_GHA_004", "No CloudTrail configured", "project-level",
                 remediation="Create aws_cloudtrail to enable audit logging. "
                             "Ghana DPA 2012, Section 34.",
             )

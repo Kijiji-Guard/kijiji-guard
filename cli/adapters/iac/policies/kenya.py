@@ -103,7 +103,7 @@ class KenyaPolicies(BasePolicy):
         trails = self.get_resources("aws_cloudtrail")
         if not trails:
             self.failed(
-                "CKV_KEN_005", "No CloudTrail audit trail", "aws_cloudtrail",
+                "CKV_KEN_005", "No CloudTrail audit trail", "project-level",
                 remediation="Create aws_cloudtrail. Kenya DPA 2019, Section 43.",
             )
         else:

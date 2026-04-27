@@ -77,22 +77,32 @@ class BasePolicy:
         Return (name, config) tuples for every resource of the given type.
 
         Handles hcl2 quirks:
-          - Keys are quoted:  '"aws_s3_bucket"' must match 'aws_s3_bucket'
-          - Config may be a list (older hcl2 behaviour) or a dict
+          - Keys may be quoted: '"aws_s3_bucket"' must match 'aws_s3_bucket'
+          - rtype_val can be a dict or a list wrapping a dict
+          - Individual resource config blocks are often wrapped in a list
         """
         results: list[tuple[str, dict]] = []
         for block in self.hcl.get("resource", []):
             for rtype_key, rtype_val in block.items():
                 if rtype_key.startswith("_"):
                     continue
-                if _strip(rtype_key) == resource_type and isinstance(rtype_val, dict):
-                    for name_key, config in rtype_val.items():
-                        if name_key.startswith("_"):
-                            continue
-                        clean_name = _strip(name_key)
-                        if isinstance(config, list):
-                            config = config[0] if config else {}
-                        results.append((clean_name, config))
+                if _strip(rtype_key) != resource_type:
+                    continue
+                # hcl2 occasionally wraps the name→config dict in a list
+                if isinstance(rtype_val, list):
+                    rtype_val = rtype_val[0] if rtype_val else {}
+                if not isinstance(rtype_val, dict):
+                    continue
+                for name_key, config in rtype_val.items():
+                    if name_key.startswith("_"):
+                        continue
+                    clean_name = _strip(name_key)
+                    # Individual resource configs are wrapped in a list by hcl2
+                    if isinstance(config, list):
+                        config = config[0] if config else {}
+                    if not isinstance(config, dict):
+                        config = {}
+                    results.append((clean_name, config))
         return results
 
     def _get_provider_region(self) -> str:
