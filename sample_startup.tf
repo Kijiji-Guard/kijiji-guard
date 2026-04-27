@@ -47,7 +47,7 @@ resource "aws_db_instance" "transaction_db" {
   instance_class       = "db.t3.micro"
   name                 = "transactions"
   username             = "admin"
-  password             = "supersecretpassword123" # Don't do this in production!
+  password             = var.db_password
   parameter_group_name = "default.postgres13"
   skip_final_snapshot  = true
   
@@ -58,4 +58,10 @@ resource "aws_db_instance" "transaction_db" {
     Name = "Transaction-DB"
     Region = "af-south-1" # Passing CKV_NGR_001
   }
+}
+
+variable "db_password" {
+  description = "RDS master password — supply via TF_VAR_db_password env var"
+  type        = string
+  sensitive   = true
 }

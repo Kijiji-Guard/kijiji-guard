@@ -3,7 +3,7 @@ Kijiji-Guard Report Engine — renders scan results as console, JSON, or HTML.
 """
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from rich.console import Console
 from rich.panel import Panel
@@ -98,7 +98,7 @@ class KijijiReport:
         target   = self.result.get("target", ".")
         summary  = self.result.get("summary", {})
         findings = self.result.get("findings", [])
-        scan_date = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+        scan_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
         rows_html = ""
         for f in findings:

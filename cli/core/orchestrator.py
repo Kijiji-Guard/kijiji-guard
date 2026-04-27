@@ -52,8 +52,6 @@ class KijijiOrchestrator:
                     if f == "vercel.json":
                         if "paas:vercel" not in types:
                             types.append("paas:vercel")
-                if os.path.join(root, "supabase", "config.toml"):
-                    pass
             # supabase check at root
             if os.path.exists(os.path.join(target, "supabase", "config.toml")):
                 types.append("paas:supabase")
@@ -66,7 +64,9 @@ class KijijiOrchestrator:
 
         return types if types else ["iac"]
 
-    def run(self, target: str, country: str, credentials: dict = {}) -> dict:
+    def run(self, target: str, country: str, credentials: dict | None = None) -> dict:
+        if credentials is None:
+            credentials = {}
         scan_types = self.detect_scan_type(target)
         all_findings: list[dict] = []
 

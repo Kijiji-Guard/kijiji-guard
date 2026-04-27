@@ -97,7 +97,11 @@ class VercelAdapter(BasePaaSScanner):
             findings += self._check_vcl002(project, name, resource, regulation)
             findings += self._check_vcl003(project, name, resource, regulation)
             findings += self._check_vcl004(project, name, resource, regulation)
-            findings += self._check_vcl005(project, name, resource, country, regulation)
+            if country == "all":
+                for rc in RESIDENCY_COUNTRIES:
+                    findings += self._check_vcl005(project, name, resource, rc, REGULATION_MAP[rc])
+            else:
+                findings += self._check_vcl005(project, name, resource, country, regulation)
 
         return findings
 
@@ -151,7 +155,7 @@ class VercelAdapter(BasePaaSScanner):
     def _check_vcl003(self, project, name, resource, regulation) -> list[dict]:
         pwd_protection = project.get("passwordProtection") is not None
         sso_protection = project.get("ssoProtection") is not None
-        dep_protection = project.get("protectionBypass") is not None
+        dep_protection = bool(project.get("protectionBypass"))
         protected = pwd_protection or sso_protection or dep_protection
         result = "PASSED" if protected else "FAILED"
         return [self._finding(
@@ -184,7 +188,7 @@ class VercelAdapter(BasePaaSScanner):
         regions   = project.get("regions", []) or []
         edge_only = framework in ("edge", "nextjs") and not regions
 
-        if country == "rwanda" and "cdg1" not in regions and "af-south-1" not in str(regions):
+        if country == "rwanda" and "af-south-1" not in str(regions):
             result = "FAILED"
             remediation = "Rwanda Law 058/2021 Article 50 requires data localisation. Pin region to af-south-1 in vercel.json."
         elif edge_only:
