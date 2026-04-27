@@ -115,5 +115,42 @@ def scan(
         report.to_html(out_path)
 
 
+@app.command()
+def watch(
+    country: str = typer.Option(
+        "nigeria",
+        "--country", "-c",
+        help="Country to monitor: nigeria, ghana, kenya, rwanda, egypt, benin, cote-divoire, or 'all'",
+    ),
+    all_updates: bool = typer.Option(
+        False,
+        "--all",
+        help="Show all updates including previously seen ones",
+    ),
+    output: str = typer.Option(
+        "console",
+        "--output", "-o",
+        help="Output format: console, json",
+    ),
+):
+    """
+    🔔 KijijiWatch — Monitor African regulatory updates.
+
+    Track changes from NDPC, Ghana DPC, Kenya ODPC, Rwanda NCSA,
+    Egypt PDPC and more. Get alerted to deadlines, enforcement
+    actions, and new regulations before they affect your business.
+    """
+    from cli.core.watcher import KijijiWatcher
+
+    watcher = KijijiWatcher()
+    result  = watcher.run(country=country, show_all=all_updates)
+
+    if output == "json":
+        import json
+        print(json.dumps(result, indent=2, default=str))
+    else:
+        watcher.display(result)
+
+
 if __name__ == "__main__":
     app()

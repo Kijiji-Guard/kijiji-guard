@@ -190,3 +190,21 @@ def html_report(scan_result: dict[str, Any]) -> str:
     finally:
         if os.path.exists(tmppath):
             os.unlink(tmppath)
+
+
+# ---------------------------------------------------------------------------
+# KijijiWatch endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/watch/{country}")
+def watch_country(country: str) -> dict[str, Any]:
+    """Fetch new regulatory updates for a country (or 'all')."""
+    from cli.core.watcher import KijijiWatcher
+    return KijijiWatcher().run(country=country, show_all=False)
+
+
+@app.get("/watch/{country}/all")
+def watch_country_all(country: str) -> dict[str, Any]:
+    """Fetch all regulatory updates including previously seen ones."""
+    from cli.core.watcher import KijijiWatcher
+    return KijijiWatcher().run(country=country, show_all=True)
