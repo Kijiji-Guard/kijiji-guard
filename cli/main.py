@@ -77,6 +77,36 @@ def scan(
         "--credentials",
         help="Path to JSON file with API tokens/keys",
     ),
+    vercel_token: Optional[str] = typer.Option(
+        None,
+        "--vercel-token",
+        help="Vercel API token (for --target vercel)",
+    ),
+    supabase_token: Optional[str] = typer.Option(
+        None,
+        "--supabase-token",
+        help="Supabase access token (for --target supabase)",
+    ),
+    aws_key: Optional[str] = typer.Option(
+        None,
+        "--aws-key",
+        help="AWS Access Key ID (for --target aws)",
+    ),
+    aws_secret: Optional[str] = typer.Option(
+        None,
+        "--aws-secret",
+        help="AWS Secret Access Key (for --target aws)",
+    ),
+    aws_region: Optional[str] = typer.Option(
+        None,
+        "--aws-region",
+        help="AWS region (default: af-south-1)",
+    ),
+    do_token: Optional[str] = typer.Option(
+        None,
+        "--do-token",
+        help="DigitalOcean token (for --target digitalocean)",
+    ),
 ):
     """Scan infrastructure for African data protection regulation compliance."""
 
@@ -92,11 +122,22 @@ def scan(
         console.print(f"[red]Unknown output '{output}'. Choose from: {', '.join(VALID_OUTPUTS)}[/red]")
         raise typer.Exit(1)
 
-    # Load credentials
+    # Load credentials: JSON file is the base, CLI flags override, env vars fill gaps.
+    # Priority: CLI flag > env var > JSON file > (absent)
     creds: dict = {}
     if credentials and os.path.isfile(credentials):
         with open(credentials) as f:
             creds = json.load(f)
+
+    creds["vercel_token"]          = vercel_token    or os.environ.get("VERCEL_TOKEN")           or creds.get("vercel_token", "")
+    creds["supabase_token"]        = supabase_token  or os.environ.get("SUPABASE_ACCESS_TOKEN")  or creds.get("supabase_token", "")
+    creds["AWS_ACCESS_KEY_ID"]     = aws_key         or os.environ.get("AWS_ACCESS_KEY_ID")      or creds.get("AWS_ACCESS_KEY_ID", "")
+    creds["AWS_SECRET_ACCESS_KEY"] = aws_secret      or os.environ.get("AWS_SECRET_ACCESS_KEY")  or creds.get("AWS_SECRET_ACCESS_KEY", "")
+    creds["AWS_DEFAULT_REGION"]    = aws_region      or os.environ.get("AWS_DEFAULT_REGION")     or creds.get("AWS_DEFAULT_REGION", "af-south-1")
+    creds["DIGITALOCEAN_TOKEN"]    = do_token        or os.environ.get("DIGITALOCEAN_TOKEN")     or creds.get("DIGITALOCEAN_TOKEN", "")
+
+    # Drop empty strings so adapters don't receive blank credentials
+    creds = {k: v for k, v in creds.items() if v}
 
     console.print(f"[bold]Kijiji-Guard scanning:[/bold] target=[cyan]{target}[/cyan]  country=[cyan]{country}[/cyan]")
 
