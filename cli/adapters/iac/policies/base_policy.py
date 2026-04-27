@@ -11,6 +11,9 @@ hcl2 parse notes (v8.x):
 """
 from __future__ import annotations
 
+import json
+import re
+
 
 def _strip(s: object) -> str:
     """Remove surrounding double-quotes that hcl2 adds to string tokens."""
@@ -120,6 +123,34 @@ class BasePolicy:
         if isinstance(val, bool):
             return str(val).lower()
         return _strip(val) if val is not None else default
+
+    @staticmethod
+    def _has_wildcard_action(policy: object) -> bool:
+        """Return True only when an IAM Allow statement has Action: '*'.
+
+        Avoids false positives on resource ARNs like 'arn:aws:s3:::bucket/*'.
+        """
+        if isinstance(policy, dict):
+            data = policy
+        elif isinstance(policy, str):
+            try:
+                data = json.loads(policy)
+            except (json.JSONDecodeError, ValueError):
+                # Fallback: regex that targets Action field specifically
+                return bool(re.search(r'"Action"\s*:\s*(?:"\*"|\[\s*"\*"\s*\])', policy))
+        else:
+            return False
+        for stmt in (data.get("Statement") or []):
+            if not isinstance(stmt, dict):
+                continue
+            if stmt.get("Effect", "Allow") != "Allow":
+                continue
+            action = stmt.get("Action", [])
+            if isinstance(action, str) and action == "*":
+                return True
+            if isinstance(action, list) and "*" in action:
+                return True
+        return False
 
     def _resolve_region(self, config: dict) -> str:
         """

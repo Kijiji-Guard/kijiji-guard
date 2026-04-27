@@ -9,3 +9,5 @@ coverage/
 __pycache__/
 *.pyc
 *.pyo
+cli/.scan_history.json
+cli/.watch_cache.db

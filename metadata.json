@@ -1,5 +1,5 @@
 {
   "name": "Kijiji-Guard",
-  "description": "Automated security auditing for NDPA 2023 compliance in Terraform.",
+  "description": "African-first compliance scanner — automated security auditing across 7 African data protection regulations (NDPA, Ghana DPA, Kenya DPA, Rwanda Law 058/2021, Loi n°2013-450, Loi n°2017-20, Egypt PDPL).",
   "requestFramePermissions": []
 }

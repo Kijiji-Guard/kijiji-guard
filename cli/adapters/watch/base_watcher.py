@@ -154,7 +154,7 @@ class BaseWatcher(ABC):
                         source_url=href,
                         category=category,
                         severity=severity,
-                        published_date="2026-01-01",
+                        published_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
                         fetched_at=now,
                     ))
             except Exception:

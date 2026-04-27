@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from cli.core.orchestrator import KijijiOrchestrator
 from cli.core.report import KijijiReport
@@ -26,11 +26,14 @@ app = FastAPI(title="Kijiji-Guard API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_KNOWN_PAAS = {"vercel", "supabase", "firebase", "render", "railway"}
+_KNOWN_API  = {"aws", "gcp", "azure", "digitalocean"}
+_KNOWN_COUNTRIES = {"nigeria", "ghana", "kenya", "rwanda", "cote-divoire", "benin", "egypt", "all"}
 
 HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".scan_history.json")
 
@@ -122,6 +125,22 @@ class ScanRequest(BaseModel):
     country: str
     credentials: dict[str, str] = {}
 
+    @field_validator("target")
+    @classmethod
+    def validate_target(cls, v: str) -> str:
+        if v in _KNOWN_PAAS | _KNOWN_API | {"auto"}:
+            return v
+        if "\x00" in v or ".." in v:
+            raise ValueError("Invalid target path")
+        return v
+
+    @field_validator("country")
+    @classmethod
+    def validate_country(cls, v: str) -> str:
+        if v not in _KNOWN_COUNTRIES:
+            raise ValueError(f"Unknown country code {v!r}. Valid: {sorted(_KNOWN_COUNTRIES)}")
+        return v
+
 
 # ---------------------------------------------------------------------------
 # Endpoints
@@ -199,12 +218,16 @@ def html_report(scan_result: dict[str, Any]) -> str:
 @app.get("/watch/{country}")
 def watch_country(country: str) -> dict[str, Any]:
     """Fetch new regulatory updates for a country (or 'all')."""
-    from cli.core.watcher import KijijiWatcher
+    from cli.core.watcher import KijijiWatcher, WATCHERS
+    if country != "all" and country not in WATCHERS:
+        raise HTTPException(status_code=400, detail=f"Unknown country: {country!r}")
     return KijijiWatcher().run(country=country, show_all=False)
 
 
 @app.get("/watch/{country}/all")
 def watch_country_all(country: str) -> dict[str, Any]:
     """Fetch all regulatory updates including previously seen ones."""
-    from cli.core.watcher import KijijiWatcher
+    from cli.core.watcher import KijijiWatcher, WATCHERS
+    if country != "all" and country not in WATCHERS:
+        raise HTTPException(status_code=400, detail=f"Unknown country: {country!r}")
     return KijijiWatcher().run(country=country, show_all=True)

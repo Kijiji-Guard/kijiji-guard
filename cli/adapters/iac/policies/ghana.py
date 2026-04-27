@@ -41,8 +41,8 @@ class GhanaPolicies(BasePolicy):
         for rtype in ("aws_iam_role_policy", "aws_iam_policy"):
             for name, config in self.get_resources(rtype):
                 res    = f"{rtype}.{name}"
-                policy = str(config.get("policy", ""))
-                if '"*"' in policy or "'*'" in policy or "Action: '*'" in policy:
+                policy = config.get("policy", "")
+                if self._has_wildcard_action(policy):
                     self.failed(
                         "CKV_GHA_002", "IAM policy uses wildcard actions", res,
                         remediation="Replace Action: '*' with least-privilege permissions. "

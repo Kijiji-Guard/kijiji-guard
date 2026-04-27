@@ -4,9 +4,12 @@ Mirrors how orchestrator.py works for scans.
 """
 from __future__ import annotations
 
+import logging
 import sqlite3
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from rich.console import Console
 from rich.panel import Panel
@@ -103,8 +106,8 @@ class KijijiWatcher:
                             d["published_date"], d["fetched_at"],
                         ),
                     )
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("Failed to persist update %s: %s", d.get("id", "?"), exc)
             conn.commit()
 
     # ------------------------------------------------------------------ #
@@ -121,8 +124,8 @@ class KijijiWatcher:
         for cls in watcher_classes:
             try:
                 all_updates.extend(cls().fetch())
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("Watcher %s failed: %s", cls.__name__, exc)
 
         new_updates = [u for u in all_updates if self._is_new(u.id)]
         self._save(new_updates)
@@ -169,17 +172,6 @@ class KijijiWatcher:
             ))
             return
 
-        # Sort: HIGH first, then by date descending
-        sorted_updates = sorted(
-            updates,
-            key=lambda u: (
-                SEVERITY_ORDER.get(u.get("severity", "LOW"), 2),
-                u.get("published_date", ""),
-            ),
-            reverse=False,
-        )
-        # Reverse date within each severity group is handled implicitly;
-        # we re-sort with a secondary reverse on date:
         sorted_updates = sorted(
             updates,
             key=lambda u: (
