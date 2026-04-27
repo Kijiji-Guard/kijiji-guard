@@ -78,6 +78,12 @@ and scan live infrastructure directly — no IaC needed.
 git clone https://github.com/Kijiji-Guard/kijiji-guard.git
 cd kijiji-guard
 
+# Install all Python dependencies (recommended)
+pip install -r cli/requirements.txt
+
+# Windows users:
+py -m pip install -r cli/requirements.txt
+
 # Install (takes ~10 seconds)
 pip install python-hcl2 rich typer pyyaml requests python-dotenv
 
@@ -147,8 +153,8 @@ py cli/main.py watch --country nigeria --all
 # Terminal 1 — start the API server
 py -m uvicorn cli.api_server:app --reload --port 8000
 
-# Terminal 2 — start the dashboard
-cd dashboard && npm install && npm run dev
+# Terminal 2 — start the dashboard (from the project root)
+npm install && npm run dev
 
 # Open: http://localhost:5173
 ```
