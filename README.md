@@ -1,4 +1,7 @@
 # Kijiji-Guard 🛡️
+[![PyPI version](https://badge.fury.io/py/kijiji-guard.svg)](https://badge.fury.io/py/kijiji-guard)
+[![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
 ### The Open-Source Compliance Scanner Built for Africa
 
 > Securing Africa's next unicorns — without the dollar-denominated 
@@ -67,95 +70,54 @@ and scan live infrastructure directly — no IaC needed.
 
 ## Quick Start
 
-### Requirements
-- Python 3.9+
-- Node.js 18+ (dashboard only)
-- Windows users: use `py` instead of `python`
-
-### 1. Clone and Install
+### Install
 
 ```bash
-git clone https://github.com/Kijiji-Guard/kijiji-guard.git
-cd kijiji-guard
-
-# Install all Python dependencies (recommended)
-pip install -r cli/requirements.txt
-
-# Windows users:
-py -m pip install -r cli/requirements.txt
-
-# Install (takes ~10 seconds)
-pip install python-hcl2 rich typer pyyaml requests python-dotenv
-
-# Windows:
-py -m pip install python-hcl2 rich typer pyyaml requests python-dotenv
+pip install kijiji-guard
 ```
 
-### 2. Scan a Terraform File
+### Scan a Terraform project
 
 ```bash
-# Scan included sample against Nigeria NDPA 2023
-python cli/main.py scan --target sample_startup.tf --country nigeria
+# Scan against Nigeria NDPA 2023
+kijiji-guard scan --target ./infra --country nigeria
 
-# Windows:
-py cli/main.py scan --target sample_startup.tf --country nigeria
+# Scan against all 7 African countries at once
+kijiji-guard scan --target ./infra --country all
 
-# Scan against ALL 7 countries at once
-py cli/main.py scan --target sample_startup.tf --country all
-
-# Scan a directory of Terraform files
-py cli/main.py scan --target ./infra --country kenya
+# Scan a public GitHub repo (clone first)
+git clone https://github.com/terraform-aws-modules/terraform-aws-s3-bucket
+kijiji-guard scan --target terraform-aws-s3-bucket --country all
 ```
 
-### 3. Scan a Vercel Project
+### Scan your Vercel project
 
 ```bash
-# Get your token at: vercel.com/account/tokens
-py cli/main.py scan --target vercel --country nigeria \
-  --vercel-token YOUR_TOKEN_HERE
-
-# Or set environment variable and skip the flag
-export VERCEL_TOKEN=your_token_here
-py cli/main.py scan --target vercel --country nigeria
+kijiji-guard scan --target vercel --country nigeria --vercel-token YOUR_TOKEN
 ```
 
-### 4. Scan a Supabase Project
+### Scan your Supabase project
 
 ```bash
-# Get your token at: supabase.com/dashboard/account/tokens
-py cli/main.py scan --target supabase --country kenya \
-  --supabase-token YOUR_TOKEN_HERE
-
-# Or set environment variable
-export SUPABASE_ACCESS_TOKEN=your_token_here
-py cli/main.py scan --target supabase --country ghana
+kijiji-guard scan --target supabase --country kenya --supabase-token YOUR_TOKEN
 ```
 
-### 5. Monitor Regulatory Updates (KijijiWatch)
+### Monitor regulatory updates (KijijiWatch)
 
 ```bash
-# Monitor Nigerian regulatory updates (NDPC, CBN, NCC)
-py cli/main.py watch --country nigeria
-
-# Monitor all 7 countries
-py cli/main.py watch --country all
-
-# Get JSON output
-py cli/main.py watch --country nigeria --output json
-
-# Show all updates including previously seen ones
-py cli/main.py watch --country nigeria --all
+kijiji-guard watch --country nigeria
+kijiji-guard watch --country all
 ```
 
-### 6. Launch the Web Dashboard
+### Launch the web dashboard
 
 ```bash
-# Terminal 1 — start the API server
-py -m uvicorn cli.api_server:app --reload --port 8000
+# Terminal 1 — API server
+pip install "kijiji-guard[dashboard]"
+kijiji-guard-api
 
-# Terminal 2 — start the dashboard (from the project root)
-npm install && npm run dev
-
+# Terminal 2 — Dashboard UI
+cd dashboard && npm install && npm run dev
 # Open: http://localhost:5173
 ```
 

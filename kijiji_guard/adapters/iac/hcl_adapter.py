@@ -1,0 +1,155 @@
+"""
+Lightweight IaC scanner using python-hcl2.
+
+No Checkov dependency. Parses Terraform HCL files directly and runs
+Kijiji-Guard custom policies as plain Python classes.
+
+Install: pip install python-hcl2
+"""
+import logging
+import os
+
+from kijiji_guard.core.base_iac_scanner import BaseIaCScanner
+
+logger = logging.getLogger(__name__)
+
+# hcl2 top-level keys that hold lists of blocks (must be merged by extending)
+_LIST_KEYS = {"resource", "provider", "data", "variable", "locals", "module", "output", "terraform"}
+
+REGULATION_LABELS = {
+    "nigeria":      "NDPA 2023",
+    "ghana":        "Ghana DPA 2012",
+    "kenya":        "Kenya DPA 2019",
+    "rwanda":       "Rwanda Law No.058/2021",
+    "cote-divoire": "Loi n°2013-450 (Côte d'Ivoire)",
+    "benin":        "Loi n°2017-20 (Bénin)",
+    "egypt":        "Egypt PDPL Law No.151/2020",
+}
+
+ALL_COUNTRIES = list(REGULATION_LABELS.keys())
+
+
+class HCLAdapter(BaseIaCScanner):
+    """
+    Lightweight IaC scanner using python-hcl2.
+    No Checkov dependency. Parses Terraform HCL files directly
+    and runs Kijiji-Guard custom policies as Python functions.
+
+    Install: pip install python-hcl2
+    """
+
+    def scan(self, path: str, country: str) -> list[dict]:
+        countries = ALL_COUNTRIES if country == "all" else [country]
+        tf_files  = self._find_tf_files(path)
+
+        if not tf_files:
+            return [{
+                "check_id":    "KG_NO_TF_FILES",
+                "check_name":  "No Terraform files found",
+                "result":      "WARN",
+                "resource":    path,
+                "file_path":   path,
+                "regulation":  "N/A",
+                "remediation": f"No .tf files found at '{path}'. "
+                               "Pass a .tf file path or a directory containing .tf files.",
+            }]
+
+        # Merge ALL .tf files into one project-level HCL dict before running policies.
+        # This ensures absence-checks (e.g. "no aws_cloudtrail exists") fire exactly
+        # once per project rather than once per file.
+        merged: dict = {}
+        for filepath in tf_files:
+            parsed = self._parse_tf_file(filepath)
+            if not parsed:
+                continue
+            for key, val in parsed.items():
+                if key in _LIST_KEYS:
+                    merged.setdefault(key, [])
+                    if isinstance(val, list):
+                        merged[key].extend(val)
+                else:
+                    merged.setdefault(key, val)
+
+        self._debug_resources(merged)
+
+        findings: list[dict] = []
+        for c in countries:
+            findings.extend(self._run_policies(merged, path, c))
+
+        return findings
+
+    def _debug_resources(self, merged: dict) -> None:
+        counts: dict[str, int] = {}
+        for block in merged.get("resource", []):
+            for rtype_key in block:
+                if not rtype_key.startswith("_"):
+                    rtype = rtype_key.strip('"')
+                    counts[rtype] = counts.get(rtype, 0) + 1
+        if counts:
+            summary = ", ".join(f"{t}={n}" for t, n in sorted(counts.items()))
+            logger.debug("Merged project resources: %s", summary)
+        else:
+            logger.debug("Merged project resources: (none found)")
+
+    # ------------------------------------------------------------------ #
+
+    def _find_tf_files(self, path: str) -> list[str]:
+        if os.path.isfile(path):
+            return [path] if path.endswith(".tf") else []
+        if os.path.isdir(path):
+            result = []
+            for root, _, files in os.walk(path):
+                for f in files:
+                    if f.endswith(".tf"):
+                        result.append(os.path.join(root, f))
+            return sorted(result)
+        return []
+
+    def _parse_tf_file(self, filepath: str) -> dict:
+        try:
+            import hcl2
+            with open(filepath, encoding="utf-8", errors="replace") as f:
+                return hcl2.load(f)
+        except ImportError:
+            return {"__error__": "python-hcl2 not installed — run: pip install python-hcl2"}
+        except Exception:
+            return {}
+
+    def _run_policies(self, parsed: dict, filepath: str, country: str) -> list[dict]:
+        policy_class = _POLICY_MAP.get(country)
+        if policy_class is None:
+            return [{
+                "check_id":    "KG_UNKNOWN_COUNTRY",
+                "check_name":  f"Unknown country: {country}",
+                "result":      "WARN",
+                "resource":    filepath,
+                "file_path":   filepath,
+                "regulation":  "N/A",
+                "remediation": f"Supported countries: {', '.join(ALL_COUNTRIES)}",
+            }]
+        return policy_class(parsed, filepath).run()
+
+
+# ------------------------------------------------------------------ #
+# Lazy import map — avoids top-level import of every policy module    #
+# ------------------------------------------------------------------ #
+
+def _load_policy_map() -> dict:
+    from kijiji_guard.adapters.iac.policies.nigeria      import NigeriaPolicies
+    from kijiji_guard.adapters.iac.policies.ghana        import GhanaPolicies
+    from kijiji_guard.adapters.iac.policies.kenya        import KenyaPolicies
+    from kijiji_guard.adapters.iac.policies.rwanda       import RwandaPolicies
+    from kijiji_guard.adapters.iac.policies.cote_divoire import CoteDivoirePolicies
+    from kijiji_guard.adapters.iac.policies.benin        import BeninPolicies
+    from kijiji_guard.adapters.iac.policies.egypt        import EgyptPolicies
+    return {
+        "nigeria":      NigeriaPolicies,
+        "ghana":        GhanaPolicies,
+        "kenya":        KenyaPolicies,
+        "rwanda":       RwandaPolicies,
+        "cote-divoire": CoteDivoirePolicies,
+        "benin":        BeninPolicies,
+        "egypt":        EgyptPolicies,
+    }
+
+_POLICY_MAP: dict = _load_policy_map()
