@@ -11,3 +11,10 @@ __pycache__/
 *.pyo
 cli/.scan_history.json
 cli/.watch_cache.db
+kijiji_guard/.scan_history.json
+kijiji_guard/.watch_cache.db
+*.scan_history.json
+*.watch_cache.db
+demo_*.txt
+report.html
+
